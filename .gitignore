@@ -1,3 +1,6 @@
 .idea/*
 running_outputs/*
 *.pyc
+*.jpg
+*.jpeg
+*.png
