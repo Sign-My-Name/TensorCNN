@@ -18,7 +18,7 @@ import matplotlib.pyplot as plt
 def create_run_dir(tag):
     tagdir = (Path(
         r'C:\Users\40gil\Desktop\final_project\tensor_training\running_outputs') /
-              f'{tag}__DateTime{datetime.now().strftime("%m-%d-%Y_%H-%M-%S")}')
+              f'{tag}__DateTime{datetime.now().strftime("%d-%m-%Y_%H-%M-%S")}')
     tagdir.mkdir(exist_ok=True, parents=True)
     plotsdir = tagdir / 'plots'
     plotsdir.mkdir(exist_ok=True, parents=True)
