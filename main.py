@@ -100,7 +100,7 @@ def save_plot(conf_mat, ticks_list, acc, dir, name):
     plt.savefig(dir / f'{name}.png')
 
 
-def save_run_res_csv(df_pp, raw_pred,pred, class_encoding_dict, class_encoding_revers, dir, name):
+def save_run_res_csv(df_pp, raw_pred, pred, class_encoding_dict, class_encoding_revers, dir, name):
     df_pp['prediction'] = pred
     df_pp['predicted_letter'] = df_pp.prediction.map(class_encoding_dict)
     df_pp.reset_index(inplace=True)
@@ -110,7 +110,21 @@ def save_run_res_csv(df_pp, raw_pred,pred, class_encoding_dict, class_encoding_r
     df_pp.to_csv(dir / f'{name}_res.csv')
 
 
-def save_run_data(fname, model, gen, df, df_pp, plotsdir):
+def save_run_history(history, dir, name='history', to_json=False, to_csv=True):
+    hist_df = pd.DataFrame(history.history)
+
+    if to_json:
+        hist_json_file = f'{name}.json'
+        hist_json_path = os.path.join(dir, hist_json_file)
+        hist_df.to_json(hist_json_path, orient='records')
+
+    if to_csv:
+        hist_csv_file = f'{name}.csv'
+        hist_csv_path = os.path.join(dir, hist_csv_file)
+        hist_df.to_csv(hist_csv_path, index=False)
+
+
+def save_run_data(fname, model, gen, df, df_pp, plotsdir, hist_to_json=False, hist_to_csv=False):
     class_encoding_revers = np.sort(df.label.unique())
     class_encoding_dict = dict(zip(np.arange(26), class_encoding_revers))
     ticks_list = [str(ii) + '(' + jj + ')' for ii, jj in class_encoding_dict.items()]
@@ -118,8 +132,10 @@ def save_run_data(fname, model, gen, df, df_pp, plotsdir):
 
     save_plot(conf_mat, ticks_list, acc, plotsdir, fname)
 
-    save_run_res_csv(df_pp=df_pp, raw_pred=raw_pred,pred=pred ,class_encoding_dict=class_encoding_dict,
+    save_run_res_csv(df_pp=df_pp, raw_pred=raw_pred, pred=pred, class_encoding_dict=class_encoding_dict,
                      class_encoding_revers=class_encoding_revers, dir=plotsdir, name=fname)
+    if hist_to_json or hist_to_csv:
+        save_run_history(history=model.history, dir=plotsdir, to_json=hist_to_json, to_csv=hist_to_csv)
 
 
 if __name__ == '__main__':
@@ -192,7 +208,8 @@ if __name__ == '__main__':
         val_gen = gens['val_gen']
         model = create_resnet50(input_shape=(ts[0], ts[1], 3), lr=lr, n_classes=13)
         # --- fit model ---
-        model.fit(trn_gen, validation_data=val_gen, callbacks=callbacks, **fit_dict)
+        history = model.fit(trn_gen, validation_data=val_gen, callbacks=callbacks, **fit_dict)
+        model.history
     # endregion
 
     # -- save model (if new model) --
@@ -202,7 +219,7 @@ if __name__ == '__main__':
         print(f'Model saved to : {fn}')
 
     save_run_data(fname="val", model=model, gen=gens['val_gen'], df=pd.read_csv(train_metapath), df_pp=pp['df_val_pp'],
-                  plotsdir=plots_dir)
+                  plotsdir=plots_dir, hist_to_csv=True, hist_to_json=True)
     save_run_data(fname="tst", model=model, gen=gens['tst_gen'], df=pd.read_csv(train_metapath), df_pp=pp['df_tst_pp'],
                   plotsdir=plots_dir)
     print("DONE!!!!")
