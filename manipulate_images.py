@@ -14,6 +14,8 @@ english_to_hebrew = {
     'B': 'ב', 'C': 'כ', 'D': 'ו', 'F': 'ט', 'I': 'י', 'L': 'ל', 'M': 'מ', 'N': 'נ', 'R': 'ר', 'S': 'ס',
     'T': 'ת', 'W': 'ש', 'Z': 'ז'
 }
+
+
 # endregion
 # region Image manipulation
 
@@ -74,12 +76,12 @@ def transform(image):
 
 
 # endregion
-def create_new_dirs(preprocess_imgs_path, subdir):
+def create_new_dirs(preprocess_imgs_path, subdir=None):
     # Create the new directory path
     root = Path(r'C:\Users\40gil\Desktop\final_project\tensor_training\processed_images')
 
     if subdir is None:
-        new_dir = root / 'new_crop'
+        new_dir = root / f'new_crop_{datetime.now().strftime("%m%Y%d-%H%M")}'
     else:
         new_dir = root / subdir
     new_dir.mkdir(parents=True, exist_ok=True)
@@ -92,7 +94,7 @@ def create_new_dirs(preprocess_imgs_path, subdir):
     return images_dir_origin, new_dir
 
 
-def process_images(preprocess_imgs_path=None, subdir_name=None, size=None, to_cut=False,to_transform=False):
+def process_images(preprocess_imgs_path=None, subdir_name=None, size=None, to_cut=False, to_transform=False):
     """
 copy images from preprocess_imgs_path to subdir_name and manipulate them.
 no need for preprocess path if this is your tree from current directory.
@@ -170,14 +172,16 @@ tensor_training (current directory):\n
                                 new_img_path = new_subsubdir / img_name
                                 cv2.imwrite(str(new_img_path), img)
     return new_dir
+
+
 def create_train_meta_data():
     df = pd.DataFrame()
     images_list = []
     labels_list = []
-    eng_heb_list=[]
+    eng_heb_list = []
 
 
 if __name__ == '__main__':
-    new_dir=process_images()
-    #class_encoding = create_train_meta_data()
-    #create_test_meta_data(class_encoding)
+    new_dir = process_images()
+    # class_encoding = create_train_meta_data()
+    # create_test_meta_data(class_encoding)
