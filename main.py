@@ -15,10 +15,13 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 
 
-def create_run_dir(tag):
-    tagdir = (Path(
-        r'C:\Users\40gil\Desktop\final_project\tensor_training\running_outputs') /
-              f'{tag}__DateTime{datetime.now().strftime("%d-%m-%Y_%H-%M-%S")}')
+def create_run_dir(tag, loaded_model):
+    root = Path(r'C:\Users\40gil\Desktop\final_project\tensor_training\running_outputs')
+    if loaded_model:
+        root = root / "loaded_models_outputs"
+    else:
+        root = root / "train_outputs"
+    tagdir = root / f'{tag}__DateTime{datetime.now().strftime("%d-%m-%Y_%H-%M-%S")}'
     tagdir.mkdir(exist_ok=True, parents=True)
     plotsdir = tagdir / 'plots'
     plotsdir.mkdir(exist_ok=True, parents=True)
@@ -35,6 +38,35 @@ def create_tag(loaded_model, bs, ts, lr, epochs, extra_run_tag_str):
         tag = f'Model={loaded_model_name}__LoadedModel_tests={test_name}'  # run tag
     return tag
 
+def split_with_class_balance(df, test_size, random_state):
+    """
+    make sure all clases from df are splited into train and test sets
+    :param df:
+    :param test_size:
+    :param random_state:
+    :return:
+    """
+    # Convert the class_encoding column to a string for grouping
+    df['class_encoding_str'] = df['class_encoding'].astype(str)
+
+    # Group the DataFrame by class_encoding and split each group
+    dfs = [group for _, group in df.groupby('class_encoding_str')]
+    train_dfs, test_dfs = [], []
+    for df_group in dfs:
+        df_train, df_test = train_test_split(df_group, test_size=test_size, random_state=random_state)
+        train_dfs.append(df_train)
+        test_dfs.append(df_test)
+
+    # Concatenate the splits to get the final train and test DataFrames
+    df_train_final = pd.concat(train_dfs)
+    df_test_final = pd.concat(test_dfs)
+
+    # Drop the temporary 'class_encoding_str' column
+    df_train_final.drop(columns=['class_encoding_str'], inplace=True)
+    df_test_final.drop(columns=['class_encoding_str'], inplace=True)
+
+    return df_test_final,df_train_final
+
 
 def preprocess_metadata(train_metapath, test_metapath, validation_split):
     df_trn = pd.read_csv(train_metapath)  # get metadata
@@ -43,8 +75,10 @@ def preprocess_metadata(train_metapath, test_metapath, validation_split):
     df_trn['class_encoding'] = df_trn['class_encoding'].apply(lambda x: [x])
     df_tst['class_encoding'] = df_tst['class_encoding'].apply(lambda x: [x])
     df_trn_pp = df_trn.copy()  # make df_pp only on train df
-    df_tst_pp, df_val_pp = train_test_split(df_tst, test_size=validation_split,
+    df_tst_pp, df_val_pp = split_with_class_balance(df_tst, test_size=validation_split,
                                             random_state=666)  # splits tst and val from df_tst
+    # df_tst_pp, df_val_pp = train_test_split(df_tst, test_size=validation_split,
+    #                                         random_state=666)  # splits tst and val from df_tst
     return df_trn_pp, df_val_pp, df_tst_pp
 
 
@@ -59,10 +93,12 @@ def create_gens(train_metapath, test_metapath, ts, validation_split):
         y_col='class_encoding',
         target_size=ts,
         class_mode='categorical',
+        weight_col='weights',
         shuffle=True)
     val_gen = ImageDataGenerator().flow_from_dataframe(df_val_pp, x_col='filename',
                                                        y_col='class_encoding',
                                                        target_size=ts, shuffle=False,
+                                                       weight_col='weights',
                                                        class_mode='categorical')
     tst_gen = ImageDataGenerator().flow_from_dataframe(df_tst_pp, x_col='filename',
                                                        y_col='class_encoding',
@@ -124,7 +160,7 @@ def save_run_history(history, dir, name='history', to_json=False, to_csv=True):
         hist_df.to_csv(hist_csv_path, index=False)
 
 
-def save_run_data(fname, model, gen, df, df_pp, plotsdir, hist_to_json=False, hist_to_csv=False):
+def save_run_data(fname, model, gen, df, df_pp, plotsdir):
     class_encoding_revers = np.sort(df.label.unique())
     class_encoding_dict = dict(zip(np.arange(26), class_encoding_revers))
     ticks_list = [str(ii) + '(' + jj + ')' for ii, jj in class_encoding_dict.items()]
@@ -134,39 +170,36 @@ def save_run_data(fname, model, gen, df, df_pp, plotsdir, hist_to_json=False, hi
 
     save_run_res_csv(df_pp=df_pp, raw_pred=raw_pred, pred=pred, class_encoding_dict=class_encoding_dict,
                      class_encoding_revers=class_encoding_revers, dir=plotsdir, name=fname)
-    if hist_to_json or hist_to_csv:
-        save_run_history(history=model.history, dir=plotsdir, to_json=hist_to_json, to_csv=hist_to_csv)
 
 
 if __name__ == '__main__':
     _loaded_model = False
-    loaded_model_dir = r'C:\Users\40gil\Desktop\degree\year_4\sm2\final_project\running_outputs\aslNew_NoWeights_transformedImgs_bs=32_ts=(128, 128)_valSplit=0.2_lr=0.001_epochs=120_DateTime=15_01_18\kaki.h5'
+    loaded_model_dir = r"C:\Users\40gil\Desktop\degree\year_4\sm2\final_project\running_outputs\asl_new_NoWeights_bs=32_ts=(128, 128)_valSplit=0.2_lr=0.001_epochs=120_DateTime=03_03_35\asl_new_NoWeights_bs=32_ts=(128, 128)_valSplit=0.2_lr=0.001_epochs=120.h5"
 
     # region Paths
-    train_path = Path(
-        r'C:\Users\40gil\Desktop\degree\year_4\sm2\final_project\cropped_128X128)18_57_14\arabic_to_english')  # path to train images directory
-    train_metapath = train_path / 'metadata.csv'
-    test_path = Path(
-        r'C:\Users\40gil\Desktop\degree\year_4\sm2\final_project\cropped_128X128)18_57_14\hebrew_to_english')  # path to test images directory
-    test_metapath = test_path / 'metadata.csv'
+
+    metadata_dir_path = Path(
+        r'C:\Users\40gil\Desktop\final_project\tensor_training\metadata\equalWeights1_friendsInTrain_04202424-1028')
+    train_path = metadata_dir_path / 'trn_metadata.csv'
+    test_path = metadata_dir_path / 'tst_metadata.csv'
 
     paths = {
-        'train_metapath': train_metapath,
-        'test_metapath': test_metapath
+        'train_metapath': train_path,
+        'test_metapath': test_path
     }
     # endregion
 
     # region Params
     params = {
         'bs': 32,  # batch size
-        'ts': (128, 128),  # target size
+        'ts': (200, 200),  # target size
         'x_col': 'filename',  # the column in the dataframe that contains the path to the images
         'y_col': 'class_encoding',
         'validation_split': 0.2,  # train validation split
         'lr': 1e-3,
-        'epochs': 1,
+        'epochs': 120,
         'steps': 100,
-        'extra_run_tag_str': "",
+        'extra_run_tag_str': "eqWeights_resnet_friendsInTrain_",  # will appear in the beggining of the running dir name
         'loaded_model': _loaded_model
     }
 
@@ -175,11 +208,11 @@ if __name__ == '__main__':
     tag = create_tag(loaded_model=_loaded_model, bs=params['bs'], ts=params['ts'], lr=params['lr'],
                      epochs=params['epochs'], extra_run_tag_str=params['extra_run_tag_str'])
 
-    running_dir, plots_dir = create_run_dir(tag)
+    running_dir, plots_dir = create_run_dir(tag, loaded_model=_loaded_model)
 
     # region Prepare train
 
-    gens, pp = create_gens(train_metapath=train_metapath, test_metapath=test_metapath, ts=params['ts'],
+    gens, pp = create_gens(train_metapath=train_path, test_metapath=test_path, ts=params['ts'],
                            validation_split=params['validation_split'])
 
     fit_dict = {
@@ -209,17 +242,20 @@ if __name__ == '__main__':
         model = create_resnet50(input_shape=(ts[0], ts[1], 3), lr=lr, n_classes=13)
         # --- fit model ---
         history = model.fit(trn_gen, validation_data=val_gen, callbacks=callbacks, **fit_dict)
-        model.history
     # endregion
 
     # -- save model (if new model) --
+    save_run_history(history=model.history, dir=plots_dir, to_csv=True, to_json=True)
     if not _loaded_model:
         fn = running_dir / 'model.h5'
         model.save(fn)  # saving tensorflow model
         print(f'Model saved to : {fn}')
 
-    save_run_data(fname="val", model=model, gen=gens['val_gen'], df=pd.read_csv(train_metapath), df_pp=pp['df_val_pp'],
-                  plotsdir=plots_dir, hist_to_csv=True, hist_to_json=True)
-    save_run_data(fname="tst", model=model, gen=gens['tst_gen'], df=pd.read_csv(train_metapath), df_pp=pp['df_tst_pp'],
+    save_run_data(fname="val", model=model, gen=gens['val_gen'], df=pd.read_csv(train_path), df_pp=pp['df_val_pp'],
                   plotsdir=plots_dir)
+    save_run_data(fname="tst", model=model, gen=gens['tst_gen'], df=pd.read_csv(train_path), df_pp=pp['df_tst_pp'],
+                  plotsdir=plots_dir)
+
+    shutil.copy(__file__, plots_dir / 'script.py')
+
     print("DONE!!!!")
