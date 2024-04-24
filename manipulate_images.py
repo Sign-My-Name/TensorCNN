@@ -53,7 +53,8 @@ def cut(image, size=None):
         hand_region = image[y_min:y_max, x_min:x_max]
         hand_region_uint8 = hand_region.astype(np.uint8)
         hand_region_bgr = cv2.cvtColor(hand_region_uint8, cv2.COLOR_RGB2BGR)
-        hand_region_bgr = cv2.resize(hand_region_bgr, dsize=size)
+        if size is not None:
+            hand_region_bgr = cv2.resize(hand_region_bgr, dsize=size)
         return hand_region_bgr
     else:
         return None
@@ -171,7 +172,7 @@ tensor_training (current directory):\n
                             if img is not None:
                                 new_img_path = new_subsubdir / img_name
                                 cv2.imwrite(str(new_img_path), img)
-    return new_dir
+    print(f'processed images saved in: {new_dir}')
 
 
 def create_train_meta_data():
@@ -182,6 +183,5 @@ def create_train_meta_data():
 
 
 if __name__ == '__main__':
-    new_dir = process_images()
-    # class_encoding = create_train_meta_data()
-    # create_test_meta_data(class_encoding)
+    process_images(preprocess_imgs_path=r'C:\Users\40gil\Desktop\final_project\tensor_training\images',
+                   subdir_name='firstCut_noZevel',to_cut=True)
