@@ -74,12 +74,17 @@ def preprocess_metadata(train_metapath, test_metapath, validation_split):
     df_trn.class_encoding = df_trn.class_encoding
     df_trn['class_encoding'] = df_trn['class_encoding'].apply(lambda x: [x])
     df_tst['class_encoding'] = df_tst['class_encoding'].apply(lambda x: [x])
+    df_tst_pp = df_tst.copy()
     df_trn_pp = df_trn.copy()  # make df_pp only on train df
-    df_tst_pp, df_val_pp = split_with_class_balance(df_tst, test_size=validation_split,
-                                            random_state=666)  # splits tst and val from df_tst
-    # df_tst_pp, df_val_pp = train_test_split(df_tst, test_size=validation_split,
+    # df_tst_pp, df_val_pp = split_with_class_balance(df_tst, test_size=0.5,
     #                                         random_state=666)  # splits tst and val from df_tst
-    return df_trn_pp, df_val_pp, df_tst_pp
+    df_trn_pp, df_val_pp = train_test_split(df_trn_pp, test_size=validation_split,
+                                            random_state=666,stratify=df_trn_pp.class_encoding)  # splits tst and val from df_tst
+    friends_indxs = df_val_pp.filename.str.contains('hebrew_to_english')
+    df_val_new_pp = df_val_pp[friends_indxs]
+    df_new_train_pp = df_val_pp[~friends_indxs]
+    df_trn_pp = pd.concat([df_trn_pp, df_new_train_pp], axis=0)
+    return df_trn_pp, df_val_new_pp, df_tst_pp
 
 
 def create_gens(train_metapath, test_metapath, ts, validation_split):
@@ -103,6 +108,7 @@ def create_gens(train_metapath, test_metapath, ts, validation_split):
     tst_gen = ImageDataGenerator().flow_from_dataframe(df_tst_pp, x_col='filename',
                                                        y_col='class_encoding',
                                                        target_size=ts, shuffle=False,
+                                                       weight_col='weights',
                                                        class_mode='categorical')
 
     return {
@@ -171,6 +177,14 @@ def save_run_data(fname, model, gen, df, df_pp, plotsdir):
     save_run_res_csv(df_pp=df_pp, raw_pred=raw_pred, pred=pred, class_encoding_dict=class_encoding_dict,
                      class_encoding_revers=class_encoding_revers, dir=plotsdir, name=fname)
 
+def save_script(dir,tag='script.py'):
+    if tag.endswith('.py'):
+        shutil.copy(__file__, plots_dir / tag) # save script
+        print (f"{tag} saved in {dir}\n you can change the script now for the next train")
+    else:
+        raise ValueError("Invalid script tag. Must end with '.py'")
+
+
 
 if __name__ == '__main__':
     _loaded_model = False
@@ -179,7 +193,7 @@ if __name__ == '__main__':
     # region Paths
 
     metadata_dir_path = Path(
-        r'C:\Users\40gil\Desktop\final_project\tensor_training\metadata\equalWeights1_friendsInTrain_04202424-1028')
+        r'C:\Users\40gil\Desktop\final_project\tensor_training\metadata\Sivan_04202426-0244-TO_TRAIN')
     train_path = metadata_dir_path / 'trn_metadata.csv'
     test_path = metadata_dir_path / 'tst_metadata.csv'
 
@@ -192,16 +206,17 @@ if __name__ == '__main__':
     # region Params
     params = {
         'bs': 32,  # batch size
-        'ts': (200, 200),  # target size
+        'ts': (128, 128),  # target size
         'x_col': 'filename',  # the column in the dataframe that contains the path to the images
         'y_col': 'class_encoding',
         'validation_split': 0.2,  # train validation split
         'lr': 1e-3,
-        'epochs': 120,
+        'epochs': 1,
         'steps': 100,
-        'extra_run_tag_str': "eqWeights_resnet_friendsInTrain_",  # will appear in the beggining of the running dir name
+        'extra_run_tag_str': "15ForFriendsInTrain_newCut_",  # will appear in the beggining of the running dir name
         'loaded_model': _loaded_model
     }
+
 
     # endregion
 
@@ -210,6 +225,7 @@ if __name__ == '__main__':
 
     running_dir, plots_dir = create_run_dir(tag, loaded_model=_loaded_model)
 
+    save_script(dir=plots_dir)
     # region Prepare train
 
     gens, pp = create_gens(train_metapath=train_path, test_metapath=test_path, ts=params['ts'],
@@ -239,7 +255,8 @@ if __name__ == '__main__':
         lr = params['lr']
         trn_gen = gens['trn_gen']
         val_gen = gens['val_gen']
-        model = create_resnet50(input_shape=(ts[0], ts[1], 3), lr=lr, n_classes=13)
+        model = create_resnet50(input_shape=(ts[0], ts[1], 3), lr=lr, n_classes=len(pp['df_trn_pp']['class_encoding'].explode().unique()))
+        model.summary()
         # --- fit model ---
         history = model.fit(trn_gen, validation_data=val_gen, callbacks=callbacks, **fit_dict)
     # endregion
@@ -256,6 +273,5 @@ if __name__ == '__main__':
     save_run_data(fname="tst", model=model, gen=gens['tst_gen'], df=pd.read_csv(train_path), df_pp=pp['df_tst_pp'],
                   plotsdir=plots_dir)
 
-    shutil.copy(__file__, plots_dir / 'script.py')
 
     print("DONE!!!!")
