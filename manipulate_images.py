@@ -14,7 +14,11 @@ english_to_hebrew = {
     'B': 'ב', 'C': 'כ', 'D': 'ו', 'F': 'ט', 'I': 'י', 'L': 'ל', 'M': 'מ', 'N': 'נ', 'R': 'ר', 'S': 'ס',
     'T': 'ת', 'W': 'ש', 'Z': 'ז'
 }
-
+hebrew_dict = {
+    'א': 'ale','ב': 'bet','ג': 'gim', 'ד': 'dal','ה': 'hey','ו': 'vav','ז': 'zay','ח': 'het','ט': 'tet', 'י': 'yud','כ': 'kaf',
+    'ל': 'lam', 'מ': 'mem', 'נ': 'nun', 'ס': 'sam',
+    'ע': 'ain','פ': 'pey','צ': 'tza', 'ק': 'kuf', 'ר': 'rey', 'ש': 'shi','ת': 'taf'
+}
 
 # endregion
 # region Image manipulation
@@ -95,7 +99,7 @@ def create_new_dirs(preprocess_imgs_path, subdir=None):
     return images_dir_origin, new_dir
 
 
-def process_images(preprocess_imgs_path=None, subdir_name=None, size=None, to_cut=False, to_transform=False):
+def process_images(preprocess_imgs_path=None, subdir_name=None, size=None, to_cut=False, to_transform=False,to_rotate=False,hebrew_path=False):
     """
 copy images from preprocess_imgs_path to subdir_name and manipulate them.
 no need for preprocess path if this is your tree from current directory.
@@ -110,6 +114,9 @@ tensor_training (current directory):\n
     :param preprocess_imgs_path:
     :param subdir_name: name of the directory with the images after manipulation.
     :param size:Tuples (x,y) will resize image.
+    :param to_rotate: whether to rotate. if True, will rotate img in 90 deg clockwise
+    :param to_transform: whether to transform according to transformation matrix
+    :param to_cut: whether to cut image according to given size
     :return: new dir created path
     """
     if subdir_name is None:
@@ -153,6 +160,8 @@ tensor_training (current directory):\n
                 print(f'------{subdir_name}')
                 subdir_path = dir_path / subdir_name
                 if os.path.isdir(subdir_path):
+                    if hebrew_path:
+                        subdir_name = hebrew_dict[subdir_name]
                     new_subsubdir = new_subdir / subdir_name
                     new_subsubdir.mkdir(parents=True, exist_ok=True)
 
@@ -162,8 +171,13 @@ tensor_training (current directory):\n
                         img_path = subdir_path / img_name
 
                         # Load and crop the image
-                        img = cv2.imread(str(img_path))
+                        if hebrew_path:
+                            img = cv2.imdecode(np.fromfile(img_path, dtype=np.uint8), cv2.IMREAD_UNCHANGED)
+                        else:
+                            img = cv2.imread(str(img_path))
                         if img is not None:
+                            if to_rotate is True:
+                                img = cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE)
                             if to_cut:
                                 img = cut(image=img, size=size)
                             if to_transform and img is not None:
@@ -183,5 +197,5 @@ def create_train_meta_data():
 
 
 if __name__ == '__main__':
-    process_images(preprocess_imgs_path=r'C:\Users\40gil\Desktop\final_project\tensor_training\images',
-                   subdir_name='firstCut_noZevel',to_cut=True)
+    process_images(preprocess_imgs_path=r'C:\Users\40gil\Desktop\final_project\tensor_training\images\outer',
+                   subdir_name='SivanCut',to_cut=True,to_rotate=True,hebrew_path=True)
