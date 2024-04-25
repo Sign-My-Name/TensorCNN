@@ -5,6 +5,7 @@ from pathlib import Path
 from datetime import datetime
 import mediapipe as mp
 import cv2
+from PIL import Image
 import matplotlib.pyplot as plt
 
 # region Globals
@@ -41,7 +42,7 @@ def cut(image, size=None):
         y_coords = [landmark.y for landmark in hand_landmarks.landmark]
         x_min, x_max = min(x_coords), max(x_coords)
         y_min, y_max = min(y_coords), max(y_coords)
-        val_to_adjust= max(image.shape[0], image.shape[1])*0.1
+        val_to_adjust= max(image.shape[0], image.shape[1])*0.08
         x_min_adjust = int(x_min * image.shape[1] - val_to_adjust)
         y_min_adjust = int(y_min * image.shape[0] - val_to_adjust)
         x_max_adjust = int(x_max * image.shape[1] + val_to_adjust)
@@ -196,7 +197,8 @@ tensor_training (current directory):\n
                             # Save the cropped image to the new location
                             if img is not None:
                                 new_img_path = new_subsubdir / img_name
-                                cv2.imwrite(str(new_img_path), img)
+                                pil_img = Image.fromarray(img)
+                                pil_img.save(str(new_img_path))
     print(f'processed images saved in: {new_dir}')
 
 
