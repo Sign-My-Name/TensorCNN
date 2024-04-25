@@ -5,6 +5,7 @@ from pathlib import Path
 from datetime import datetime
 import mediapipe as mp
 import cv2
+import matplotlib.pyplot as plt
 
 # region Globals
 
@@ -15,10 +16,12 @@ english_to_hebrew = {
     'T': 'ת', 'W': 'ש', 'Z': 'ז'
 }
 hebrew_dict = {
-    'א': 'ale','ב': 'bet','ג': 'gim', 'ד': 'dal','ה': 'hey','ו': 'vav','ז': 'zay','ח': 'het','ט': 'tet', 'י': 'yud','כ': 'kaf',
+    'א': 'ale', 'ב': 'bet', 'ג': 'gim', 'ד': 'dal', 'ה': 'hey', 'ו': 'vav', 'ז': 'zay', 'ח': 'het', 'ט': 'tet',
+    'י': 'yud', 'כ': 'kaf',
     'ל': 'lam', 'מ': 'mem', 'נ': 'nun', 'ס': 'sam',
-    'ע': 'ain','פ': 'pey','צ': 'tza', 'ק': 'kuf', 'ר': 'rey', 'ש': 'shi','ת': 'taf'
+    'ע': 'ain', 'פ': 'pey', 'צ': 'tza', 'ק': 'kuf', 'ר': 'rey', 'ש': 'shi', 'ת': 'taf'
 }
+
 
 # endregion
 # region Image manipulation
@@ -30,18 +33,23 @@ def cut(image, size=None):
     :return: cv2 image
     """
     image = image.astype(np.uint8)
-    processed_image = hands.process(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
+    rgb_image=cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    processed_image = hands.process(rgb_image)
     if processed_image.multi_hand_landmarks:
         hand_landmarks = processed_image.multi_hand_landmarks[0]
         x_coords = [landmark.x for landmark in hand_landmarks.landmark]
         y_coords = [landmark.y for landmark in hand_landmarks.landmark]
         x_min, x_max = min(x_coords), max(x_coords)
         y_min, y_max = min(y_coords), max(y_coords)
-
-        x_min_adjust = int(x_min * image.shape[1] - 80)
-        y_min_adjust = int(y_min * image.shape[0] - 80)
-        x_max_adjust = int(x_max * image.shape[1] + 80)
-        y_max_adjust = int(y_max * image.shape[0] + 80)
+        val_to_adjust= max(image.shape[0], image.shape[1])*0.1
+        x_min_adjust = int(x_min * image.shape[1] - val_to_adjust)
+        y_min_adjust = int(y_min * image.shape[0] - val_to_adjust)
+        x_max_adjust = int(x_max * image.shape[1] + val_to_adjust)
+        y_max_adjust = int(y_max * image.shape[0] + val_to_adjust)
+        # x_min_adjust = int(x_min * image.shape[1])
+        # y_min_adjust = int(y_min * image.shape[0])
+        # x_max_adjust = int(x_max * image.shape[1])
+        # y_max_adjust = int(y_max * image.shape[0])
         if x_min_adjust < 0:
             x_min_adjust = int(x_min * image.shape[1] - 15)
             if x_min_adjust < 0:
@@ -54,12 +62,12 @@ def cut(image, size=None):
         y_min = y_min_adjust
         x_max = x_max_adjust
         y_max = y_max_adjust
-        hand_region = image[y_min:y_max, x_min:x_max]
+        hand_region = rgb_image[y_min:y_max, x_min:x_max]
         hand_region_uint8 = hand_region.astype(np.uint8)
-        hand_region_bgr = cv2.cvtColor(hand_region_uint8, cv2.COLOR_RGB2BGR)
+        #hand_region_bgr = cv2.cvtColor(hand_region_uint8, cv2.COLOR_RGB2BGR)
         if size is not None:
-            hand_region_bgr = cv2.resize(hand_region_bgr, dsize=size)
-        return hand_region_bgr
+            hand_region_bgr = cv2.resize(hand_region_uint8, dsize=size)
+        return hand_region_uint8
     else:
         return None
 
@@ -99,7 +107,8 @@ def create_new_dirs(preprocess_imgs_path, subdir=None):
     return images_dir_origin, new_dir
 
 
-def process_images(preprocess_imgs_path=None, subdir_name=None, size=None, to_cut=False, to_transform=False,to_rotate=False,hebrew_path=False):
+def process_images(preprocess_imgs_path=None, subdir_name=None, size=None, to_cut=False, to_transform=False,
+                   to_rotate=False, hebrew_path=False):
     """
 copy images from preprocess_imgs_path to subdir_name and manipulate them.
 no need for preprocess path if this is your tree from current directory.
@@ -150,6 +159,8 @@ tensor_training (current directory):\n
                         new_img_path = this_path / img_name
                         cv2.imwrite(str(new_img_path), img)
             continue
+        elif dir_name == 'outer':
+            continue
         dir_path = images_dir / dir_name
         if os.path.isdir(dir_path):
             new_subdir = new_dir / dir_name
@@ -176,7 +187,7 @@ tensor_training (current directory):\n
                         else:
                             img = cv2.imread(str(img_path))
                         if img is not None:
-                            if to_rotate is True:
+                            if to_rotate:
                                 img = cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE)
                             if to_cut:
                                 img = cut(image=img, size=size)
@@ -197,5 +208,7 @@ def create_train_meta_data():
 
 
 if __name__ == '__main__':
-    process_images(preprocess_imgs_path=r'C:\Users\40gil\Desktop\final_project\tensor_training\images\outer',
-                   subdir_name='SivanCut',to_cut=True,to_rotate=True,hebrew_path=True)
+    process_images(preprocess_imgs_path=r'C:\Users\40gil\Desktop\final_project\tensor_training\images',
+    subdir_name='NewCut',to_cut=True,to_rotate=False,hebrew_path=False)
+    # image = cv2.imread(r"C:\Users\40gil\Desktop\final_project\tensor_training\images\arabic_to_english\D\Beh_219.jpg")
+    # cut(image=image)
