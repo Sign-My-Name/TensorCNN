@@ -133,7 +133,7 @@ def save_df(df, path, name):
 
 
 if __name__ == '__main__':
-    images_dir = Path(r'C:\Users\40gil\Desktop\final_project\tensor_training\processed_images\NewCut')
+    images_dir = Path(r'C:\Users\40gil\Desktop\final_project\tensor_training\processed_images\half_landmarks')
     subdir_name = f'Sivan_{datetime.now().strftime("%m%Y%d-%H%M")}'
     new_dir = create_new_dirs(subdir=subdir_name)
     TRdfs = []
