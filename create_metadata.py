@@ -42,14 +42,14 @@ def create_tst_df(images_dir, _class_encoding=None, weight=1):
     eng_heb_list = []
     weights = []
     for img in os.listdir(images_dir):
-        cur_label = img.split('_')[0]
-        # cur_label=img.split('.')[0] # ain.jpeg for example
-        if len(cur_label) > 1:  # not a letter
+        #cur_label = img.split('_')[0]
+        cur_label=img.split('.')[0] # ain.jpeg for example
+        if len(cur_label) > 3:  # not a letter
             continue
         images_list.append(os.path.join(images_dir, img))
         labels_list.append(cur_label)
         lable_class_encoding.append(class_encoding[cur_label])
-        eng_heb_list.append(english_to_hebrew[cur_label])
+        eng_heb_list.append(hebrew_dict[hehbrew_letters_in_english[cur_label]])
         weights.append(weight)
 
     df["filename"] = images_list
@@ -81,17 +81,17 @@ def create_trn_df(images_dir, _class_encoding=None, weight=1):
         class_encoding = _class_encoding
 
     for dir in os.listdir(images_dir):  # dir is the letter
-        if len(dir) > 1:
+        if len(dir) > 3:
             continue
         if _class_encoding is None:  # creates class encoding. Change this if you dont want class encoding to be from counter
-            # class_encoding[dir] = hebrew_dict[hehbrew_letters_in_english[dir]]
+            class_encoding[dir] = hebrew_dict[hehbrew_letters_in_english[dir]]
             class_counter += 1
-            class_encoding[dir] = class_counter
+            #class_encoding[dir] = class_counter
         for img in os.listdir(os.path.join(images_dir, dir)):
             images_list.append(os.path.join(images_dir, dir, img))
             labels_list.append(dir)
             lable_class_encoding.append(class_encoding[dir])
-            eng_heb_list.append(english_to_hebrew[dir])
+            eng_heb_list.append(hebrew_dict[hehbrew_letters_in_english[dir]])
             weights.append(weight)
     df["filename"] = images_list
     df["label"] = labels_list
@@ -134,29 +134,29 @@ def save_df(df, path, name):
 
 if __name__ == '__main__':
     images_dir = Path(r'C:\Users\40gil\Desktop\final_project\tensor_training\processed_images\NewCut')
-    subdir_name = f'Cutasl_withEqTstVal_{datetime.now().strftime("%m%Y%d-%H%M")}'
+    subdir_name = f'Sivan_{datetime.now().strftime("%m%Y%d-%H%M")}'
     new_dir = create_new_dirs(subdir=subdir_name)
     TRdfs = []
 
     # region train dfs
-    TRdf, class_encoding = create_trn_df(images_dir=images_dir / 'asl_alphabet_train')
+    TRdf, class_encoding = create_trn_df(images_dir=images_dir / 'sivan')
     TRdfs.append(TRdf)
-    TRdf = create_trn_df(images_dir=images_dir / 'arabic_to_english', _class_encoding=class_encoding)
-    TRdfs.append(TRdf)
+    # TRdf = create_trn_df(images_dir=images_dir / 'arabic_to_english', _class_encoding=class_encoding)
+    # TRdfs.append(TRdf)
 
     # endregion
 
     # region test df
     TSdfs = []
-    TSdf = create_tst_df(images_dir=images_dir / 'asl_alphabet_test', _class_encoding=class_encoding)
+    TSdf = create_tst_df(images_dir=images_dir / 'sivan_tst', _class_encoding=class_encoding)
     TSdfs.append(TSdf)
-    TSdf = create_trn_df(images_dir=images_dir / 'hebrew_to_english', _class_encoding=class_encoding,weight=15)
+    #TSdf = create_trn_df(images_dir=images_dir / 'hebrew_to_english', _class_encoding=class_encoding,weight=15)
     # ----- add 80% friends to train
     # freinds_to_train = TSdf.sample(frac=0.8, random_state=666,ignore_index=False)
-    friends_to_train, TSdf = train_test_split(TSdf, test_size=0.2, stratify=TSdf.class_encoding,random_state=666)
-    TRdfs.append(friends_to_train)
+    #friends_to_train, TSdf = train_test_split(TSdf, test_size=0.2, stratify=TSdf.class_encoding,random_state=666)
+    #TRdfs.append(friends_to_train)
     # ------
-    TSdfs.append(TSdf)
+    #TSdfs.append(TSdf)
     save_df(df=TRdfs, path=new_dir, name='trn_metadata')
     save_df(df=TSdfs, path=new_dir, name='tst_metadata')
 

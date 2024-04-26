@@ -80,11 +80,11 @@ def preprocess_metadata(train_metapath, test_metapath, validation_split):
     #                                         random_state=666)  # splits tst and val from df_tst
     df_trn_pp, df_val_pp = train_test_split(df_trn_pp, test_size=validation_split,
                                             random_state=666,stratify=df_trn_pp.class_encoding)  # splits tst and val from df_tst
-    friends_indxs = df_val_pp.filename.str.contains('hebrew_to_english')
-    df_val_new_pp = df_val_pp[friends_indxs]
-    df_new_train_pp = df_val_pp[~friends_indxs]
-    df_trn_pp = pd.concat([df_trn_pp, df_new_train_pp], axis=0)
-    return df_trn_pp, df_val_new_pp, df_tst_pp
+    # friends_indxs = df_val_pp.filename.str.contains('hebrew_to_english')
+    # df_val_new_pp = df_val_pp[friends_indxs]
+    # df_new_train_pp = df_val_pp[~friends_indxs]
+    # df_trn_pp = pd.concat([df_trn_pp, df_new_train_pp], axis=0)
+    return df_trn_pp, df_val_pp, df_tst_pp
 
 
 def create_gens(train_metapath, test_metapath, ts, validation_split):
@@ -211,9 +211,9 @@ if __name__ == '__main__':
         'y_col': 'class_encoding',
         'validation_split': 0.2,  # train validation split
         'lr': 1e-3,
-        'epochs': 1,
+        'epochs': 120,
         'steps': 100,
-        'extra_run_tag_str': "15ForFriendsInTrain_newCut_",  # will appear in the beggining of the running dir name
+        'extra_run_tag_str': "SivanTrain_",  # will appear in the beggining of the running dir name
         'loaded_model': _loaded_model
     }
 
