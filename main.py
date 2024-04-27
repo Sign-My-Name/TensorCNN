@@ -193,7 +193,7 @@ if __name__ == '__main__':
     # region Paths
 
     metadata_dir_path = Path(
-        r'C:\Users\40gil\Desktop\final_project\tensor_training\metadata\Sivan_04202426-0244-TO_TRAIN')
+        r'C:\Users\40gil\Desktop\final_project\tensor_training\metadata\Sivan_04202426-1024')
     train_path = metadata_dir_path / 'trn_metadata.csv'
     test_path = metadata_dir_path / 'tst_metadata.csv'
 
@@ -206,14 +206,14 @@ if __name__ == '__main__':
     # region Params
     params = {
         'bs': 32,  # batch size
-        'ts': (128, 128),  # target size
+        'ts': (200, 200),  # target size
         'x_col': 'filename',  # the column in the dataframe that contains the path to the images
         'y_col': 'class_encoding',
         'validation_split': 0.2,  # train validation split
         'lr': 1e-3,
         'epochs': 120,
         'steps': 100,
-        'extra_run_tag_str': "SivanTrain_",  # will appear in the beggining of the running dir name
+        'extra_run_tag_str': "SivanTrain_handLandmarks",  # will appear in the beggining of the running dir name
         'loaded_model': _loaded_model
     }
 
