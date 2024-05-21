@@ -25,6 +25,8 @@ hebrew_dict = {
     'ע': 'ain', 'פ': 'pey', 'צ': 'tza', 'ק': 'kuf', 'ר': 'rey', 'ש': 'shi', 'ת': 'taf'
 }
 
+new_heb_letters = ['י','ת','ש','ר','ק','צ','פ']
+
 
 # endregion
 # region Image manipulation
@@ -44,7 +46,7 @@ def draw_hand_skeleton(image):
 def isolate_and_crop_hand(image, padding=60):
     results = hands.process(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
     if results.multi_hand_landmarks:
-        image = draw_hand_skeleton(image)
+        #image = draw_hand_skeleton(image)
         mask = np.zeros(image.shape[:2], dtype=np.uint8)
         for hand_landmarks in results.multi_hand_landmarks:
             points = [(int(landmark.x * image.shape[1]), int(landmark.y * image.shape[0]))
@@ -293,6 +295,8 @@ def process_images_sivan(preprocess_imgs_path=None, subdir_name=None, size=None,
 
             # Loop through all subdirectories in the current directory
             for subdir_name in os.listdir(dir_path):
+                if subdir_name not in new_heb_letters:
+                    continue
                 print(f'------{subdir_name}')
                 subdir_path = dir_path / subdir_name
                 if os.path.isdir(subdir_path):
@@ -454,17 +458,54 @@ def process_images_to_half_landmarks_sivan(preprocess_imgs_path=None, subdir_nam
                                 pil_img.save(str(new_img_path))
     print(f'processed images saved in: {new_dir}')
 
+
+def process_words_images_sivan(preprocess_imgs_path=None, subdir_name=None, size=None, to_cut=False, to_transform=False,
+                         to_rotate=False):
+    if subdir_name is None:
+        subdir = 'new_crop'
+    else:
+        subdir = subdir_name
+
+    images_dir, new_dir = create_new_dirs(preprocess_imgs_path=preprocess_imgs_path, subdir=subdir)
+    # Loop through all directories in the original images directory
+    for dir_name in os.listdir(images_dir):
+        print(f'--------------{dir_name}')
+        dir_path = images_dir / dir_name
+        if os.path.isdir(dir_path):
+            new_sub_dir = new_dir / dir_name
+            new_sub_dir.mkdir(parents=True, exist_ok=True)
+            # Loop through all images in the current subdirectory
+            for img_name in os.listdir(dir_path):
+                print(f'-{img_name}')
+                img_path = dir_path / img_name
+
+                # Load and crop the image
+                img = cv2.imread(str(img_path))
+                if img is not None:
+                    if to_rotate:
+                        img = cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE)
+                    if to_cut:
+                        img = cut(image=img, size=size)
+                    if to_transform and img is not None:
+                        img = transform(img)
+                    # Save the cropped image to the new location
+                    if img is not None:
+                        new_img_path = new_sub_dir / img_name
+                        pil_img = Image.fromarray(img)
+                        pil_img.save(str(new_img_path))
+    print(f'processed images saved in: {new_dir}')
+
 if __name__ == '__main__':
     # process_images(preprocess_imgs_path=r'C:\Users\40gil\Desktop\final_project\tensor_training\images',
     # # subdir_name='NewCut',to_cut=True,to_rotate=False,hebrew_path=False)
 
-    # process_images_sivan(preprocess_imgs_path=r'C:\Users\40gil\Desktop\final_project\tensor_training\images\outer',
-    #                      subdir_name='NewCut', to_cut=True, to_rotate=True, hebrew_path=True)
+     process_words_images_sivan(preprocess_imgs_path=r'C:\Users\40gil\Desktop\final_project\tensor_training\images\words',
+                         subdir_name='WordsCut', to_cut=True, to_rotate=False)
 
-    #process_images_to_half_landmarks(
-     #   preprocess_imgs_path=r'C:\Users\40gil\Desktop\final_project\tensor_training\images',
-      #  subdir_name='half_landmarks')
-    process_images_to_half_landmarks_sivan(preprocess_imgs_path=r'C:\Users\40gil\Desktop\final_project\tensor_training\images\outer',
-                                           subdir_name="half_landmarks",hebrew_path=True,to_rotate=True)
-    # image = cv2.imread(r"C:\Users\40gil\Desktop\final_project\tensor_training\images\arabic_to_english\D\Beh_219.jpg")
+    # process_images_to_half_landmarks(
+    #    preprocess_imgs_path=r'C:\Users\40gil\Desktop\final_project\tensor_training\images',
+    #    subdir_name='half_landmarks')
+    # process_images_to_half_landmarks_sivan(preprocess_imgs_path=r'C:\Users\40gil\Desktop\final_project\tensor_training\images\outer',
+    #                                       subdir_name="fullLetters_isolatedCrop_NoSkeleton",hebrew_path=True,to_rotate=True)
+    #image = cv2.imread(r"C:\Users\40gil\Desktop\final_project\tensor_training\images\arabic_to_english\D\Beh_219.jpg")
     # cut(image=image)
