@@ -1,0 +1,6 @@
+,index,filename,label,class_encoding,weights,prediction,predicted_letter,raw_pred_bye,raw_pred_excellent,raw_pred_idf,raw_pred_ok,raw_pred_soldier
+0,0,C:\Users\40gil\Desktop\final_project\tensor_training\processed_images\WordsCut\tst\bye.JPG,bye,[0],1,0,bye,0.9999521,8.856937e-07,4.6045036e-05,1.0933718e-06,3.057802e-08
+1,1,C:\Users\40gil\Desktop\final_project\tensor_training\processed_images\WordsCut\tst\excellent.JPG,excellent,[1],1,1,excellent,0.0009650658,0.9976174,0.0010309621,0.00038040936,6.0589127e-06
+2,2,C:\Users\40gil\Desktop\final_project\tensor_training\processed_images\WordsCut\tst\idf.JPG,idf,[2],1,2,idf,6.230702e-08,1.7299348e-06,0.99998724,1.098218e-05,9.374391e-09
+3,3,C:\Users\40gil\Desktop\final_project\tensor_training\processed_images\WordsCut\tst\ok.JPG,ok,[3],1,3,ok,0.0004548214,1.6209161e-06,6.053098e-07,0.99954283,6.643018e-08
+4,4,C:\Users\40gil\Desktop\final_project\tensor_training\processed_images\WordsCut\tst\soldier.JPG,soldier,[4],1,4,soldier,2.4621332e-07,4.5537225e-05,0.00024505414,0.0003638917,0.99934524
