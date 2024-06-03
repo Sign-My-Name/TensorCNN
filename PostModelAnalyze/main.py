@@ -7,6 +7,7 @@ from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from sklearn.metrics import confusion_matrix
 import seaborn as sns
 import matplotlib.pyplot as plt
+import re
 
 
 def create_run_dir(model_name, model_date, isWords=False):
@@ -61,6 +62,8 @@ def save_plot(conf_mat, ticks_list, acc, dir, name):
     ax.tick_params(axis='both', which='major', labelsize=10)
     plt.title(f'acc={acc}')
     plt.savefig(dir / f'{name}.png')
+    with open(dir / 'acc.txt', 'w') as f:
+        f.write(acc)
 
 
 def save_run_res_csv(df_pp, raw_pred, pred, class_encoding_dict, class_encoding_revers, dir, name):
@@ -92,12 +95,12 @@ def save_run_data(fname, model, gen, df, df_pp, rootdir):
     class_encoding_revers = df.label.unique()
     class_encoding_dict = dict(zip(np.arange(22), class_encoding_revers))
     ticks_list = [str(ii) + '(' + jj + ')' for ii, jj in class_encoding_dict.items()]
+
     raw_pred, pred, acc, conf_mat = get_xset_pred_matrix(model, gen, df_pp)
-    plotsdir = Path(rootdir) / 'plots'
-    save_plot(conf_mat, ticks_list, acc, plotsdir, fname)
+    save_plot(conf_mat, ticks_list, acc, rootdir, fname)
 
     save_run_res_csv(df_pp=df_pp, raw_pred=raw_pred, pred=pred, class_encoding_dict=class_encoding_dict,
-                     class_encoding_revers=class_encoding_revers, dir=plotsdir, name=fname)
+                     class_encoding_revers=class_encoding_revers, dir=rootdir, name=fname)
 
 
 def get_all_models(models_dir_path):
@@ -120,33 +123,32 @@ def get_all_models(models_dir_path):
     return models_metadata
 
 
-
 if __name__ == '__main__':
     models = get_all_models(
         models_dir_path=r"C:\Users\40gil\Desktop\final_project\tensor_training\running_outputs\train_outputs")
-    is_words = False
-    loaded_model_dir = (r"C:\Users\40gil\Desktop\final_project\tensor_training\running_outputs\train_outputs\27-05"
-                        r"-2024\Letters_JustCut_NoResnetLayers__bs32__ts128X128__epochs120__lr0.001__Time_16-10-26"
-                        r"\model-letters.h5")
-
     metadata_dir_path = Path(
-        r'C:\Users\40gil\Desktop\final_project\tensor_training\metadata\Sivan_05202426-1211')
+        r'C:\Users\40gil\Desktop\final_project\tensor_training\metadata\FriendsCut__06202403-1729')
     test_path = metadata_dir_path / 'tst_metadata.csv'
 
-    ts = (128, 128)  # target size
-
-    loaded_model_splits = loaded_model_dir.split('\\')
-    loaded_model_name = loaded_model_splits[len(loaded_model_splits) - 2]
-    loaded_model_date = loaded_model_splits[len(loaded_model_splits) - 3]
-    tag = loaded_model_name  # run tag
-
-    root_dir = create_run_dir(model_name=tag, model_date=loaded_model_date, isWords=is_words)
-
-    gens = create_gens(test_metapath=test_path, ts=ts)
-
-    model = tf.keras.models.load_model(loaded_model_dir)
-
-    save_run_data(fname="tst", model=model, gen=gens['tst_gen'], df=pd.read_csv(test_path), df_pp=gens['df_tst_pp'],
-                  rootdir=root_dir)
+    ts = ()
+    for date in models:
+        loaded_model_date = date
+        for model_path in models[date]:
+            for key, val in model_path.items():
+                loaded_model_name = ''.join(val.split('\\')[-2].split('__')[:-1])
+                tag = loaded_model_name  # run tag
+                loaded_model_dir = val
+                match = re.search(r'ts(\d+)X(\d+)', val)
+                if match:
+                    ts = (int(match.group(1)), int(match.group(2)))
+                else:
+                    print(f"no size was found in: \n\t{loaded_model_dir}")
+                    continue
+                root_dir = create_run_dir(model_name=tag, model_date=loaded_model_date)
+                gens = create_gens(test_metapath=test_path, ts=ts)
+                model = tf.keras.models.load_model(loaded_model_dir)
+                save_run_data(fname="tst", model=model, gen=gens['tst_gen'], df=pd.read_csv(test_path),
+                              df_pp=gens['df_tst_pp'],
+                              rootdir=root_dir)
 
     print("DONE!!!!")
