@@ -22,7 +22,6 @@ def create_run_dir(model_name, model_date, isWords=False):
     return root
 
 
-
 def preprocess_metadata(test_metapath):
     df_tst = pd.read_csv(test_metapath)  # get metadata
     df_tst['class_encoding'] = df_tst['class_encoding'].apply(lambda x: [x])
@@ -101,7 +100,30 @@ def save_run_data(fname, model, gen, df, df_pp, rootdir):
                      class_encoding_revers=class_encoding_revers, dir=plotsdir, name=fname)
 
 
+def get_all_models(models_dir_path):
+    """
+    :param models_dir_path: all models parent dir where sub dirs are dirs named after the date
+    :return: models_metadta = {<date> : {<model name>: <full path of model.h5>, ...}}
+    """
+    models_metadata = {}
+    for subdir in os.listdir(models_dir_path):
+        models_metadata[subdir] = []
+        curr_date_dir = f"{models_dir_path}\\{subdir}"
+        for model_dir in os.listdir(curr_date_dir):
+            curr_model_dir = f"{curr_date_dir}\\{model_dir}"
+            if model_dir == "Words":
+                continue
+            for file in os.listdir(curr_model_dir):
+                if file.endswith(".h5"):
+                    models_metadata[subdir].append({model_dir: f"{curr_model_dir}\\{file}"})
+                    continue
+    return models_metadata
+
+
+
 if __name__ == '__main__':
+    models = get_all_models(
+        models_dir_path=r"C:\Users\40gil\Desktop\final_project\tensor_training\running_outputs\train_outputs")
     is_words = False
     loaded_model_dir = (r"C:\Users\40gil\Desktop\final_project\tensor_training\running_outputs\train_outputs\27-05"
                         r"-2024\Letters_JustCut_NoResnetLayers__bs32__ts128X128__epochs120__lr0.001__Time_16-10-26"
