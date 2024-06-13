@@ -46,7 +46,6 @@ for date_folder in os.listdir(root_folder):
                 data[model_name].append((date, accuracy))
 
 # Plot the data
-# Plot the data
 plt.figure(figsize=(12, 8))
 
 # Initialize lists to store all dates and accuracies
@@ -64,7 +63,14 @@ for model_name, values in data.items():
         m_size = 40
     elif m_size < 10:
         m_size = 10
-    plt.plot(dates, accuracies, marker='o', markersize=m_size)
+
+    # Plot the points
+    plt.plot(dates, accuracies, marker='o', markersize=m_size, label=model_name)
+
+    # Add model name as annotation for points with accuracy > 0.55
+    for date, acc in zip(dates, accuracies):
+        if acc > 0.55:
+            plt.text(date, acc, model_name, fontsize=15, ha='right', va='bottom')
 
 # Determine plot range based on all dates
 min_date = min(all_dates)
@@ -74,10 +80,13 @@ max_date = max(all_dates)
 plt.yticks(fontsize=15)
 plt.xticks(pd.date_range(start=min_date, end=max_date, freq='4D'), rotation=45, fontsize=15)
 
-plt.xlabel('Date')
-plt.ylabel('Accuracy (%)',fontsize=25)
-plt.title('Model Accuracy Over Time',fontsize=25)
+plt.xlabel('Date', fontsize=25)
+plt.ylabel('Accuracy', fontsize=25)
+plt.title('Model Accuracy Over Time', fontsize=25)
 plt.grid(True, which='both', linestyle='--', linewidth=0.5)
 plt.tight_layout()
+
+# Add legend outside the plot
+plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left', fontsize='medium')
 
 plt.show()
