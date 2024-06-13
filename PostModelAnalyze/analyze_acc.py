@@ -83,7 +83,7 @@ plt.xticks(pd.date_range(start=min_date, end=max_date, freq='4D'), rotation=45, 
 plt.xlabel('Date', fontsize=25)
 plt.ylabel('Accuracy', fontsize=25)
 plt.title('Model Accuracy Over Time', fontsize=25)
-plt.grid(True, which='both', linestyle='--', linewidth=0.5)
+plt.grid(True, which='both', linestyle='-', linewidth=0.5)
 plt.tight_layout()
 
 # Add legend outside the plot
