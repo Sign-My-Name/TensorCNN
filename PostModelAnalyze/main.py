@@ -11,7 +11,7 @@ import re
 
 
 def create_run_dir(model_name, model_date, isWords=False):
-    root = Path(r'C:\Users\40gil\Desktop\final_project\tensor_training\PostModelAnalyze')
+    root = Path(r'C:\Users\40gil\Desktop\final_project\tensor_training\PostModelAnalyze2')
     root = root / "loaded_models_outputs"
     if isWords:
         root = root / f"words"
@@ -150,10 +150,49 @@ def run_all_models_on_test(models_parent_dir_path, metadata_parent_path):
                 save_run_data(fname="tst", model=model, gen=gens['tst_gen'], df=pd.read_csv(test_path),
                               df_pp=gens['df_tst_pp'],
                               rootdir=root_dir)
+
+
+def process_csv(file_path):
+    data = pd.read_csv(file_path)
+
+    # Extract required columns
+    actual_letters = data['label']
+    predicted_letters = data['predicted_letter']
+    probabilities = data['raw_pred_' + predicted_letters].values
+
+    return actual_letters, predicted_letters, probabilities
+
+
+def plot_predictions(actual, predicted, probabilities, model_name):
+    plt.figure(figsize=(12, 6))
+    plt.scatter(actual, predicted, c=probabilities, cmap='viridis', alpha=0.7, edgecolors='b')
+    plt.colorbar(label='Probability')
+    plt.xlabel('Actual Letters')
+    plt.ylabel('Predicted Letters')
+    plt.title(f'Predictions vs Actuals for Model: {model_name}')
+    plt.xticks(rotation=90)
+    plt.yticks(rotation=90)
+    plt.grid(True)
+    plt.show()
+
+
+def main(folder_path):
+    for file_name in os.listdir(folder_path):
+        if file_name.endswith('.csv'):
+            file_path = os.path.join(folder_path, file_name)
+            model_name = os.path.splitext(file_name)[0]
+            actual, predicted, probabilities = process_csv(file_path)
+            plot_predictions(actual, predicted, probabilities, model_name)
+
+
+# if __name__ == '__main__':
+#     folder_path = '/mnt/data'  # Change this to your folder path containing the CSV files
+#     main(folder_path)
+
 if __name__ == '__main__':
-    # run_all_models_on_test(models_parent_dir_path=r"C:\Users\40gil\Desktop\final_project\tensor_training"
-    #                                               r"\running_outputs\train_outputs",
-    #                        metadata_parent_path=r'C:\Users\40gil\Desktop\final_project\tensor_training\metadata'
-    #                                             r'\FriendsCut__06202403-1729')
+    run_all_models_on_test(models_parent_dir_path=r"C:\Users\40gil\Desktop\final_project\tensor_training"
+                                                  r"\running_outputs\train_outputs",
+                           metadata_parent_path=r'C:\Users\40gil\Desktop\final_project\tensor_training\metadata'
+                                                r'\FriendsCut__06202413-1758')
     print("Done!")
 
