@@ -18,8 +18,7 @@ def create_run_dir(model_name, model_date, isWords=False):
     else:
         root = root / f"letters"
     root = root / model_date / model_name
-    plotsdir = root / 'plots'
-    plotsdir.mkdir(exist_ok=True, parents=True)
+    root.mkdir(exist_ok=True, parents=True)
     return root
 
 
@@ -63,7 +62,7 @@ def save_plot(conf_mat, ticks_list, acc, dir, name):
     plt.title(f'acc={acc}')
     plt.savefig(dir / f'{name}.png')
     with open(dir / 'acc.txt', 'w') as f:
-        f.write(acc)
+        f.write(str(acc))
 
 
 def save_run_res_csv(df_pp, raw_pred, pred, class_encoding_dict, class_encoding_revers, dir, name):
@@ -72,7 +71,11 @@ def save_run_res_csv(df_pp, raw_pred, pred, class_encoding_dict, class_encoding_
     df_pp.reset_index(inplace=True)
     for ind_img in range(df_pp.shape[0]):
         for ind_letter, l in enumerate(class_encoding_revers):
-            df_pp.loc[ind_img, 'raw_pred_' + l] = raw_pred[ind_img, ind_letter]
+            try:
+                df_pp.loc[ind_img, 'raw_pred_' + l] = raw_pred[ind_img, ind_letter]
+            except IndexError:
+                continue
+
     df_pp.to_csv(dir / f'{name}_res.csv')
 
 
@@ -122,12 +125,9 @@ def get_all_models(models_dir_path):
                     continue
     return models_metadata
 
-
-if __name__ == '__main__':
-    models = get_all_models(
-        models_dir_path=r"C:\Users\40gil\Desktop\final_project\tensor_training\running_outputs\train_outputs")
-    metadata_dir_path = Path(
-        r'C:\Users\40gil\Desktop\final_project\tensor_training\metadata\FriendsCut__06202403-1729')
+def run_all_models_on_test(models_parent_dir_path, metadata_parent_path):
+    models = get_all_models(models_dir_path=models_parent_dir_path)
+    metadata_dir_path = Path(metadata_parent_path)
     test_path = metadata_dir_path / 'tst_metadata.csv'
 
     ts = ()
@@ -150,5 +150,10 @@ if __name__ == '__main__':
                 save_run_data(fname="tst", model=model, gen=gens['tst_gen'], df=pd.read_csv(test_path),
                               df_pp=gens['df_tst_pp'],
                               rootdir=root_dir)
+if __name__ == '__main__':
+    # run_all_models_on_test(models_parent_dir_path=r"C:\Users\40gil\Desktop\final_project\tensor_training"
+    #                                               r"\running_outputs\train_outputs",
+    #                        metadata_parent_path=r'C:\Users\40gil\Desktop\final_project\tensor_training\metadata'
+    #                                             r'\FriendsCut__06202403-1729')
+    print("Done!")
 
-    print("DONE!!!!")
