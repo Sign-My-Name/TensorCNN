@@ -5,7 +5,7 @@ from datetime import datetime
 import pandas as pd
 
 # Define the path to the root folder
-root_folder = r"C:\Users\40gil\Desktop\final_project\tensor_training\PostModelAnalyze2\loaded_models_outputs\letters"
+root_folder = r"C:\Users\40gil\Desktop\final_project\tensor_training\PostModelAnalyze\loaded_models_outputs\letters"
 
 # Dictionary to store the data
 data = {}
@@ -70,7 +70,12 @@ for model_name, values in data.items():
     # Add model name as annotation for points with accuracy > 0.55
     for date, acc in zip(dates, accuracies):
         if acc > 0.55:
-            plt.text(date, acc, model_name, fontsize=15, ha='right', va='bottom')
+            plt.text(date, acc, f'{acc:.2f}', fontsize=12, ha='center', va='bottom', color='white', weight='bold')
+            plt.text(date, acc, model_name, fontsize=12, ha='center', va='top', color='black')
+        # if acc > 0.55:
+        #     plt.text(date, acc, model_name, fontsize=15, ha='right', va='bottom')
+        #     plt.text(date, acc, f'{acc:.2f}', fontsize=12, ha='right', va='bottom')
+
 
 # Determine plot range based on all dates
 min_date = min(all_dates)
@@ -87,6 +92,5 @@ plt.grid(True, which='both', linestyle='-', linewidth=0.5)
 plt.tight_layout()
 
 # Add legend outside the plot
-plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left', fontsize='medium')
 
 plt.show()

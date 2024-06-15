@@ -11,7 +11,7 @@ import re
 
 
 def create_run_dir(model_name, model_date, isWords=False):
-    root = Path(r'C:\Users\40gil\Desktop\final_project\tensor_training\PostModelAnalyze2')
+    root = Path(r'C:\Users\40gil\Desktop\final_project\tensor_training\PostModelAnalyze3')
     root = root / "loaded_models_outputs"
     if isWords:
         root = root / f"words"
@@ -184,10 +184,6 @@ def main(folder_path):
             actual, predicted, probabilities = process_csv(file_path)
             plot_predictions(actual, predicted, probabilities, model_name)
 
-
-# if __name__ == '__main__':
-#     folder_path = '/mnt/data'  # Change this to your folder path containing the CSV files
-#     main(folder_path)
 
 if __name__ == '__main__':
     run_all_models_on_test(models_parent_dir_path=r"C:\Users\40gil\Desktop\final_project\tensor_training"
