@@ -11,8 +11,8 @@ import re
 
 
 def create_run_dir(model_name, model_date, isWords=False):
-    root = Path(r'C:\Users\40gil\Desktop\final_project\tensor_training\PostModelAnalyze3')
-    root = root / "loaded_models_outputs"
+    root = Path(r'C:\Users\40gil\Desktop\final_project\tensor_training\PostModelAnalyze')
+    root = root / "loaded_models_outputs2"
     if isWords:
         root = root / f"words"
     else:
@@ -55,11 +55,15 @@ def get_xset_pred_matrix(model, gen, df_pp):
 def save_plot(conf_mat, ticks_list, acc, dir, name):
     fig = plt.figure(figsize=(16, 16))
     ax = fig.add_subplot(111)
-    sns.heatmap(conf_mat, annot=True, ax=ax)
-    ax.set_xticklabels(ticks_list, rotation=45)
+    heatmap= sns.heatmap(conf_mat, annot=True, ax=ax,annot_kws={"size": 18},cbar_kws={"shrink": 0.75})
+    ax.set_xticklabels(ticks_list, rotation=0)
     ax.set_yticklabels(ticks_list, rotation=0)
-    ax.tick_params(axis='both', which='major', labelsize=10)
-    plt.title(f'acc={acc}')
+    ax.tick_params(axis='both', which='major', labelsize=20)
+    ax.set_xlabel("Prediction", fontsize=25)  # Add x-axis title
+    ax.set_ylabel("Input", fontsize=25)  # Add y-axis title
+    plt.title(f'acc={"%.2f" % acc}', fontsize=30)
+    cbar = heatmap.collections[0].colorbar
+    cbar.ax.tick_params(labelsize=15)  # Set font size of color bar ticks
     plt.savefig(dir / f'{name}.png')
     with open(dir / 'acc.txt', 'w') as f:
         f.write(str(acc))
@@ -94,13 +98,16 @@ def save_run_history(history, dir, name='history', to_json=False, to_csv=True):
 
 
 def save_run_data(fname, model, gen, df, df_pp, rootdir):
+    hebrew_ticks = ['א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ז', 'ח', 'ט', 'י', 'כ', 'ל',
+                    'מ', 'נ', 'ס', 'ע', 'פ', 'צ', 'ק', 'ר', 'ש', 'ת'
+                    ]
     df = df.sort_values('class_encoding')
     class_encoding_revers = df.label.unique()
     class_encoding_dict = dict(zip(np.arange(22), class_encoding_revers))
     ticks_list = [str(ii) + '(' + jj + ')' for ii, jj in class_encoding_dict.items()]
 
     raw_pred, pred, acc, conf_mat = get_xset_pred_matrix(model, gen, df_pp)
-    save_plot(conf_mat, ticks_list, acc, rootdir, fname)
+    save_plot(conf_mat, hebrew_ticks, acc, rootdir, fname)
 
     save_run_res_csv(df_pp=df_pp, raw_pred=raw_pred, pred=pred, class_encoding_dict=class_encoding_dict,
                      class_encoding_revers=class_encoding_revers, dir=rootdir, name=fname)
@@ -124,6 +131,7 @@ def get_all_models(models_dir_path):
                     models_metadata[subdir].append({model_dir: f"{curr_model_dir}\\{file}"})
                     continue
     return models_metadata
+
 
 def run_all_models_on_test(models_parent_dir_path, metadata_parent_path):
     models = get_all_models(models_dir_path=models_parent_dir_path)
@@ -191,4 +199,3 @@ if __name__ == '__main__':
                            metadata_parent_path=r'C:\Users\40gil\Desktop\final_project\tensor_training\metadata'
                                                 r'\FriendsCut__06202413-1758')
     print("Done!")
-
