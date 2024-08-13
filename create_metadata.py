@@ -55,7 +55,6 @@ def create_tst_df(images_dir, _class_encoding=None, weight=1):
     df["filename"] = images_list
     df["label"] = labels_list
     df['class_encoding'] = lable_class_encoding
-    # df['hebrew'] = eng_heb_list
     df['weights'] = weights
 
     return df
@@ -156,7 +155,7 @@ def create_words_tst_df(images_dir, _class_encoding=None, weight=1):
         cur_label = img.split('.')[0]  # ain.jpeg for example
         images_list.append(os.path.join(images_dir, img))
         labels_list.append(cur_label)
-        #lable_class_encoding.append(class_encoding[cur_label])
+        lable_class_encoding.append(class_encoding[cur_label])
         weights.append(weight)
 
     df["filename"] = images_list
@@ -169,7 +168,7 @@ def create_words_tst_df(images_dir, _class_encoding=None, weight=1):
 
 def create_new_dirs(subdir=None):
     # Create the new directory path
-    root = Path(r'C:\Users\40gil\Desktop\final_project\tensor_training\metadata')
+    root = Path(r'C:\Users\40gil\Desktop\AltDegree\final_project\tensor_training\metadata')
 
     if subdir is None:
         new_dir = root / f'new_metadata_{datetime.now().strftime("%m%Y%d-%H%M")}'
@@ -202,15 +201,34 @@ if __name__ == '__main__':
     TRdfs = []
 
     # region train dfs
-    TRdf, class_encoding = create_trn_df(images_dir=images_dir / 'tst')
+    TRdf, class_encoding = create_trn_df(images_dir=images_dir / 'trn')
     TRdfs.append(TRdf)
     # endregion
 
     # region test df
-    # TSdfs = []
-    # TSdf = create_words_tst_df(images_dir=images_dir / 'tst')
-    # TSdfs.append(TSdf)
+    TSdfs = []
+    TSdf = create_tst_df(images_dir=images_dir / 'tst')
+    TSdfs.append(TSdf)
     save_df(df=TRdfs, path=new_dir, name='trn_metadata')
-    # save_df(df=TSdfs, path=new_dir, name='tst_metadata')
+    save_df(df=TSdfs, path=new_dir, name='tst_metadata')
+
+    # endregion
+
+    images_dir = Path(r'C:\Users\40gil\Desktop\AltDegree\final_project\tensor_training\processed_images\sivan_words_example')
+    new_dir_name = f'SivanWordsExample{datetime.now().strftime("%m%Y%d-%H%M")}'
+    new_dir = create_new_dirs(subdir=new_dir_name)
+    TRdfs = []
+
+    # region train dfs
+    TRdf, class_encoding = create_words_trn_df(images_dir=images_dir / 'trn')
+    TRdfs.append(TRdf)
+    # endregion
+
+    # region test df
+    TSdfs = []
+    TSdf = create_words_tst_df(images_dir=images_dir / 'tst')
+    TSdfs.append(TSdf)
+    save_df(df=TRdfs, path=new_dir, name='trn_metadata')
+    save_df(df=TSdfs, path=new_dir, name='tst_metadata')
 
     # endregion
