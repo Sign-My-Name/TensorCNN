@@ -9,6 +9,16 @@ hands = mp_hands.Hands(max_num_hands=1, min_detection_confidence=0.8)
 mp_drawing = mp.solutions.drawing_utils
 mp_drawing_styles = mp.solutions.drawing_styles
 
+
+def augment_image(image: np.array, to_cut: bool, to_transform: bool, to_rotate: bool, size: tuple = None) -> np.array:
+    """Applies the required transformations to the image."""
+    if to_rotate:
+        image = cv2.rotate(image, cv2.ROTATE_90_CLOCKWISE)
+    if to_cut:
+        image = cut(image=image, size=size)
+    if to_transform:
+        image = transform(image)
+    return image
 def draw_hand_skeleton(image):
     results = hands.process(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
     if results.multi_hand_landmarks:
