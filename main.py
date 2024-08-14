@@ -1,27 +1,26 @@
 import os
 from pathlib import Path
 from datetime import datetime
-
-from h5py._hl import dataset
-from keras.models import load_model
 from sklearn.model_selection import train_test_split
 import pandas as pd
 import numpy as np
 import tensorflow as tf
 import shutil
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
-from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
+from sklearn.metrics import confusion_matrix
 import seaborn as sns
 import matplotlib.pyplot as plt
 
 
-def create_run_dir(tag, loaded_model):
-    root = Path(r'C:\Users\40gil\Desktop\final_project\tensor_training\running_outputs')
+def create_run_dir(tag, loaded_model, isWords=False):
+    root = Path(r'C:\Users\40gil\Desktop\AltDegree\final_project\tensor_training\running_outputs')
     if loaded_model:
         root = root / "loaded_models_outputs"
     else:
-        root = root / "train_outputs"
-    tagdir = root / f'{tag}__DateTime{datetime.now().strftime("%d-%m-%Y_%H-%M-%S")}'
+        root = root / "train_outputs" / datetime.now().strftime("%d-%m-%Y")
+    if isWords:
+        root = root / "Words"
+    tagdir = root / f'{tag}__Time_{datetime.now().strftime("%H-%M-%S")}'
     tagdir.mkdir(exist_ok=True, parents=True)
     plotsdir = tagdir / 'plots'
     plotsdir.mkdir(exist_ok=True, parents=True)
@@ -37,6 +36,7 @@ def create_tag(loaded_model, bs, ts, lr, epochs, extra_run_tag_str):
         loaded_model_name = loaded_model_dir.split('\\')[len(loaded_model_dir.split('\\')) - 1]
         tag = f'Model={loaded_model_name}__LoadedModel_tests={test_name}'  # run tag
     return tag
+
 
 def split_with_class_balance(df, test_size, random_state):
     """
@@ -65,7 +65,7 @@ def split_with_class_balance(df, test_size, random_state):
     df_train_final.drop(columns=['class_encoding_str'], inplace=True)
     df_test_final.drop(columns=['class_encoding_str'], inplace=True)
 
-    return df_test_final,df_train_final
+    return df_test_final, df_train_final
 
 
 def preprocess_metadata(train_metapath, test_metapath, validation_split):
@@ -76,14 +76,9 @@ def preprocess_metadata(train_metapath, test_metapath, validation_split):
     df_tst['class_encoding'] = df_tst['class_encoding'].apply(lambda x: [x])
     df_tst_pp = df_tst.copy()
     df_trn_pp = df_trn.copy()  # make df_pp only on train df
-    # df_tst_pp, df_val_pp = split_with_class_balance(df_tst, test_size=0.5,
-    #                                         random_state=666)  # splits tst and val from df_tst
     df_trn_pp, df_val_pp = train_test_split(df_trn_pp, test_size=validation_split,
-                                            random_state=666,stratify=df_trn_pp.class_encoding)  # splits tst and val from df_tst
-    # friends_indxs = df_val_pp.filename.str.contains('hebrew_to_english')
-    # df_val_new_pp = df_val_pp[friends_indxs]
-    # df_new_train_pp = df_val_pp[~friends_indxs]
-    # df_trn_pp = pd.concat([df_trn_pp, df_new_train_pp], axis=0)
+                                            random_state=666,
+                                            stratify=df_trn_pp.class_encoding)  # splits tst and val from df_tst
     return df_trn_pp, df_val_pp, df_tst_pp
 
 
@@ -177,23 +172,24 @@ def save_run_data(fname, model, gen, df, df_pp, plotsdir):
     save_run_res_csv(df_pp=df_pp, raw_pred=raw_pred, pred=pred, class_encoding_dict=class_encoding_dict,
                      class_encoding_revers=class_encoding_revers, dir=plotsdir, name=fname)
 
-def save_script(dir,tag='script.py'):
+
+def save_script(dir, tag='script.py'):
     if tag.endswith('.py'):
-        shutil.copy(__file__, plots_dir / tag) # save script
-        print (f"{tag} saved in {dir}\n you can change the script now for the next train")
+        shutil.copy(__file__, plots_dir / tag)  # save script
+        print(f"{tag} saved in {dir}\n you can change the script now for the next train")
     else:
         raise ValueError("Invalid script tag. Must end with '.py'")
 
 
-
 if __name__ == '__main__':
     _loaded_model = False
-    loaded_model_dir = r"C:\Users\40gil\Desktop\degree\year_4\sm2\final_project\running_outputs\asl_new_NoWeights_bs=32_ts=(128, 128)_valSplit=0.2_lr=0.001_epochs=120_DateTime=03_03_35\asl_new_NoWeights_bs=32_ts=(128, 128)_valSplit=0.2_lr=0.001_epochs=120.h5"
+    is_words_train = False
+    loaded_model_dir = r"C:\Users\40gil\Desktop\AltDegree\final_project\tensor_training\running_outputs\train_outputs\27-05-2024\Letters_JustCut_NoResnetLayers__bs32__ts128X128__epochs120__lr0.001__Time_16-10-26\model-letters.h5"
 
     # region Paths
 
     metadata_dir_path = Path(
-        r'C:\Users\40gil\Desktop\final_project\tensor_training\metadata\Sivan_04202426-1024')
+        r'C:\Users\40gil\Desktop\AltDegree\final_project\tensor_training\metadata\SivanLettersExample_08202414-1103')
     train_path = metadata_dir_path / 'trn_metadata.csv'
     test_path = metadata_dir_path / 'tst_metadata.csv'
 
@@ -206,24 +202,23 @@ if __name__ == '__main__':
     # region Params
     params = {
         'bs': 32,  # batch size
-        'ts': (200, 200),  # target size
+        'ts': (128, 128),  # target size
         'x_col': 'filename',  # the column in the dataframe that contains the path to the images
         'y_col': 'class_encoding',
         'validation_split': 0.2,  # train validation split
         'lr': 1e-3,
         'epochs': 120,
         'steps': 100,
-        'extra_run_tag_str': "SivanTrain_handLandmarks",  # will appear in the beggining of the running dir name
+        'extra_run_tag_str': "Letters_JustCut_ResnetLayers",  # will appear in the beggining of the running dir name
         'loaded_model': _loaded_model
     }
-
 
     # endregion
 
     tag = create_tag(loaded_model=_loaded_model, bs=params['bs'], ts=params['ts'], lr=params['lr'],
                      epochs=params['epochs'], extra_run_tag_str=params['extra_run_tag_str'])
 
-    running_dir, plots_dir = create_run_dir(tag, loaded_model=_loaded_model)
+    running_dir, plots_dir = create_run_dir(tag, loaded_model=_loaded_model, isWords=is_words_train)
 
     save_script(dir=plots_dir)
     # region Prepare train
@@ -255,16 +250,20 @@ if __name__ == '__main__':
         lr = params['lr']
         trn_gen = gens['trn_gen']
         val_gen = gens['val_gen']
-        model = create_resnet50(input_shape=(ts[0], ts[1], 3), lr=lr, n_classes=len(pp['df_trn_pp']['class_encoding'].explode().unique()))
+        model = create_resnet50(input_shape=(ts[0], ts[1], 3), lr=lr,
+                                n_classes=len(pp['df_trn_pp']['class_encoding'].explode().unique()))
         model.summary()
         # --- fit model ---
         history = model.fit(trn_gen, validation_data=val_gen, callbacks=callbacks, **fit_dict)
     # endregion
 
     # -- save model (if new model) --
-    save_run_history(history=model.history, dir=plots_dir, to_csv=True, to_json=True)
     if not _loaded_model:
-        fn = running_dir / 'model.h5'
+        if is_words_train:
+            save_run_history(history=model.history, dir=plots_dir, to_csv=True, to_json=True)
+            fn = running_dir / 'model-words.h5'
+        else:
+            fn = running_dir / 'model-letters.h5'
         model.save(fn)  # saving tensorflow model
         print(f'Model saved to : {fn}')
 
@@ -272,6 +271,5 @@ if __name__ == '__main__':
                   plotsdir=plots_dir)
     save_run_data(fname="tst", model=model, gen=gens['tst_gen'], df=pd.read_csv(train_path), df_pp=pp['df_tst_pp'],
                   plotsdir=plots_dir)
-
 
     print("DONE!!!!")
