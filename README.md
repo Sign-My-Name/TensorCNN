@@ -35,9 +35,19 @@ The `main.py` script handles the entire training process. It:
 - Trains the model with the given parameters and saves the trained model.
 - Evaluates the model using metrics like confusion matrices and accuracy.
 
-## Installation
+### Installation
 
-To get started, clone the repository and install the required packages listed in the `requirements.txt` file:
+To get started, clone the repository and install the required packages listed in the `requirements.txt` file
 
-```bash
-pip install -r requirements.txt
+## Related Repositories
+- **Project Repository:** [SignMyName Project Repository](https://github.com/Sign-My-Name)
+- **App Repository:** [SignMyName App Repository](https://github.com/Sign-My-Name/tkinter)
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+
+
+
+
