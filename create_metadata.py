@@ -121,21 +121,22 @@ def save_df(df: pd.DataFrame, path: Path, name: str):
 
 
 if __name__ == '__main__':
-    # Example usage for letters
-    images_dir = Path(r'C:\Users\40gil\Desktop\AltDegree\final_project\tensor_training\processed_images\sivan_example_processed')
+
+    # letters dfs
+    images_dir = Path(r'C:\Users\40gil\Desktop\AltDegree\final_project\tensor_training\processed_images'
+                      r'\sivan_example_processed')
     new_dir = create_new_dirs(new_dir='SivanLettersExample')
 
-    # Handle letters without a pre-existing class encoding
     trn_df, class_encoding = create_df(images_dir=images_dir / 'trn', mode='trn')
     tst_df = create_df(images_dir=images_dir / 'tst', mode='tst', _class_encoding=class_encoding)
     save_df(df=trn_df, path=new_dir, name='trn_metadata')
     save_df(df=tst_df, path=new_dir, name='tst_metadata')
 
-    # Example usage for words
-    images_dir = Path(r'C:\Users\40gil\Desktop\AltDegree\final_project\tensor_training\processed_images\sivan_words_example')
+    # words dfs
+    images_dir = Path(r'C:\Users\40gil\Desktop\AltDegree\final_project\tensor_training\processed_images'
+                      r'\sivan_words_example')
     new_dir = create_new_dirs(new_dir='SivanWordsExample')
 
-    # Handle words with a pre-existing class encoding
     trn_df = create_df(images_dir=images_dir / 'trn', mode='trn', _class_encoding=words_dict)
     tst_df = create_df(images_dir=images_dir / 'tst', mode='tst', _class_encoding=words_dict)
     save_df(df=trn_df, path=new_dir, name='trn_metadata')
