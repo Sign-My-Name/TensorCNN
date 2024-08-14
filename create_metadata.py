@@ -101,9 +101,9 @@ def create_new_dirs(new_dir: str = None) -> Path:
     """
     root = Path(r'C:\Users\40gil\Desktop\AltDegree\final_project\tensor_training\metadata')
     if not new_dir:
-        new_dir = root / f'new_metadata_{datetime.now().strftime("%m%Y%d-%H%M")}'
+        new_dir = root / f'new_metadata_{datetime.now().strftime("%d-%m-%Y--%H%M")}'
     else:
-        new_dir = root / f'{new_dir}_{datetime.now().strftime("%m%Y%d-%H%M")}'
+        new_dir = root / f'{new_dir}_{datetime.now().strftime("%d-%m-%Y--%H%M")}'
     new_dir.mkdir(parents=True, exist_ok=True)
     return new_dir
 
