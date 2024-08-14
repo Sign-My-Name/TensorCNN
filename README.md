@@ -1,6 +1,6 @@
 # SignMyName - ISL Training Scripts
 
-![SignMyName Logo](https://link-to-your-logo.png) <!-- Optional: Add your project's logo -->
+![SignMyName Logo](images/logo.png) <!-- Optional: Add your project's logo -->
 
 ## Overview
 
