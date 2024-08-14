@@ -43,9 +43,6 @@ To get started, clone the repository and install the required packages listed in
 - **Project Repository:** [SignMyName Project Repository](https://github.com/Sign-My-Name)
 - **App Repository:** [SignMyName App Repository](https://github.com/Sign-My-Name/tkinter)
 
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 
 
