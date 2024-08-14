@@ -136,19 +136,14 @@ def save_run_data(fname, model, gen, df, df_pp, plotsdir):
     class_encoding_dict = dict(zip(np.arange(26), class_encoding_revers))
     ticks_list = [str(ii) + '(' + jj + ')' for ii, jj in class_encoding_dict.items()]
     raw_pred, pred, acc, conf_mat = get_xset_pred_matrix(model, gen, df_pp)
-
     save_plot(conf_mat, ticks_list, acc, plotsdir, fname)
-
     save_run_res_csv(df_pp=df_pp, raw_pred=raw_pred, pred=pred, class_encoding_dict=class_encoding_dict,
                      class_encoding_revers=class_encoding_revers, dir=plotsdir, name=fname)
 
 
 def save_script(dir, tag='script.py'):
-    if tag.endswith('.py'):
-        shutil.copy(__file__, dir / tag)
-        print(f"{tag} saved in {dir}\n you can change the script now for the next train")
-    else:
-        raise ValueError("Invalid script tag. Must end with '.py'")
+    shutil.copy(__file__, dir / tag)
+    print(f"{tag} saved in {dir}")
 
 
 # Main Execution
