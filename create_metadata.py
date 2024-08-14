@@ -3,7 +3,7 @@ import os
 from pathlib import Path
 from datetime import datetime
 
-
+# Global Mappings
 english_to_hebrew = {
     'B': 'ב', 'C': 'כ', 'D': 'ו', 'F': 'ט', 'I': 'י', 'L': 'ל', 'M': 'מ', 'N': 'נ', 'R': 'ר', 'S': 'ס',
     'T': 'ת', 'W': 'ש', 'Z': 'ז'
@@ -11,224 +11,133 @@ english_to_hebrew = {
 
 hebrew_dict = {
     'א': 0, 'ב': 1, 'ג': 2, 'ד': 3, 'ה': 4, 'ו': 5, 'ז': 6, 'ח': 7, 'ט': 8, 'י': 9, 'כ': 10, 'ל': 11, 'מ': 12, 'נ': 13,
-    'ס': 14,
-    'ע': 15, 'פ': 16, 'צ': 17, 'ק': 18, 'ר': 19, 'ש': 20, 'ת': 21
+    'ס': 14, 'ע': 15, 'פ': 16, 'צ': 17, 'ק': 18, 'ר': 19, 'ש': 20, 'ת': 21
 }
 
 words_dict = {
     'bye': 0, 'excellent': 1, 'idf': 2, 'ok': 3, 'soldier': 4
 }
-hehbrew_letters_in_english = {
-    'ale': 'א', 'bet': 'ב', 'gim': 'ג', 'dal': 'ד', 'hey': 'ה', 'vav': 'ו', 'zay': 'ז', 'het': 'ח', 'tet': 'ט',
-    'yud': 'י'
-    , 'kaf': 'כ', 'lam': 'ל', 'mem': 'מ', 'nun': 'נ', 'sam': 'ס', 'ain': 'ע', 'pey': 'פ', 'tza': 'צ', 'kuf': 'ק'
-    , 'rey': 'ר', 'shi': 'ש', 'taf': 'ת'
 
+hebrew_letters_in_english = {
+    'ale': 'א', 'bet': 'ב', 'gim': 'ג', 'dal': 'ד', 'hey': 'ה', 'vav': 'ו', 'zay': 'ז', 'het': 'ח', 'tet': 'ט',
+    'yud': 'י', 'kaf': 'כ', 'lam': 'ל', 'mem': 'מ', 'nun': 'נ', 'sam': 'ס', 'ain': 'ע', 'pey': 'פ', 'tza': 'צ',
+    'kuf': 'ק', 'rey': 'ר', 'shi': 'ש', 'taf': 'ת'
 }
 
 
-def create_tst_df(images_dir, _class_encoding=None, weight=1):
+def create_df(images_dir: Path, mode: str, _class_encoding: dict = None, weight: int = 1) -> pd.DataFrame:
     """
-    assums that all tst images are in the same directory (no subdirs) and each img name starts with the letter it represent and then underline
-    for example, an img represent the letter B will be named B_something
-    :param images_dir:
-    :param _class_encoding:
-    :return:
-    """
-    df = pd.DataFrame()
-    images_list = []
-    labels_list = []
-    lable_class_encoding = []
-    eng_heb_list = []
-    weights = []
-    for img in os.listdir(images_dir):
-        # cur_label = img.split('_')[0]
-        cur_label = img.split('.')[0]  # ain.jpeg for example
-        if len(cur_label) > 3:  # not a letter
-            continue
-        images_list.append(os.path.join(images_dir, img))
-        labels_list.append(cur_label)
-        lable_class_encoding.append(class_encoding[cur_label])
-        eng_heb_list.append(hebrew_dict[hehbrew_letters_in_english[cur_label]])
-        weights.append(weight)
+    Creates a DataFrame for training or testing images.
 
-    df["filename"] = images_list
-    df["label"] = labels_list
-    df['class_encoding'] = lable_class_encoding
-    df['weights'] = weights
-
-    return df
-
-
-def create_trn_df(images_dir, _class_encoding=None, weight=1):
-    """
-    Assums that in imgs_dir there are dirs named by the letter only (len=1)
-    :param imgs_dir:
-    :return: metadata df. if _class_encoding is None, returns class_encoding dict
+    :param images_dir: Directory containing images.
+    :param mode: 'trn' for training or 'tst' for testing.
+    :param _class_encoding: Optional dictionary for class encoding.
+    :param weight: Weight to assign to each image.
+    :return: DataFrame with image metadata and optionally, a class encoding dictionary.
     """
     df = pd.DataFrame()
-    images_list = []
-    labels_list = []
-    eng_heb_list = []
-    weights = []
-    lable_class_encoding = []
-    class_counter = 0
+    images_list, labels_list, lable_class_encoding, eng_heb_list, weights = [], [], [], [], []
 
-    if _class_encoding is None:
-        class_encoding = {}
-    else:
-        class_encoding = _class_encoding
+    # Initialize class encoding if not provided
+    class_encoding = _class_encoding if _class_encoding else {}
 
-    for dir in os.listdir(images_dir):  # dir is the letter
-        if len(dir) > 3:
-            continue
-        if _class_encoding is None:  # creates class encoding. Change this if you dont want class encoding to be from counter
-            class_encoding[dir] = hebrew_dict[hehbrew_letters_in_english[dir]]
-            class_counter += 1
-            # class_encoding[dir] = class_counter
-        for img in os.listdir(os.path.join(images_dir, dir)):
-            images_list.append(os.path.join(images_dir, dir, img))
-            labels_list.append(dir)
-            lable_class_encoding.append(class_encoding[dir])
-            eng_heb_list.append(hebrew_dict[hehbrew_letters_in_english[dir]])
+    if mode == 'trn':
+        # Process training images
+        for subdir in os.listdir(images_dir):
+            subdir_path = images_dir / subdir
+
+            if not os.path.isdir(subdir_path):
+                continue
+
+            if _class_encoding is None:
+                if subdir in words_dict:
+                    class_encoding[subdir] = words_dict[subdir]
+                else:
+                    class_encoding[subdir] = hebrew_dict[hebrew_letters_in_english[subdir]]
+
+            for img_name in os.listdir(subdir_path):
+                img_path = subdir_path / img_name
+                cur_label = subdir
+
+                images_list.append(str(img_path))
+                labels_list.append(cur_label)
+                lable_class_encoding.append(class_encoding[cur_label])
+                eng_heb_list.append(hebrew_dict.get(hebrew_letters_in_english.get(cur_label)))
+                weights.append(weight)
+
+        # Create DataFrame
+        df["filename"] = images_list
+        df["label"] = labels_list
+        df['class_encoding'] = lable_class_encoding
+        df['weights'] = weights
+        df['hebrew'] = eng_heb_list
+
+    elif mode == 'tst':
+        # Process testing images
+        for img_name in os.listdir(images_dir):
+            img_path = images_dir / img_name
+            cur_label = img_name.split('.')[0]  # Assuming filename structure like 'ale.jpg'
+
+            images_list.append(str(img_path))
+            labels_list.append(cur_label)
+            lable_class_encoding.append(class_encoding[cur_label])
             weights.append(weight)
-    df["filename"] = images_list
-    df["label"] = labels_list
-    df['class_encoding'] = lable_class_encoding
-    df['weights'] = weights
-    df['hebrew'] = eng_heb_list
-    if _class_encoding is None:
-        return df, class_encoding
-    else:
-        return df
+
+        # Create DataFrame
+        df["filename"] = images_list
+        df["label"] = labels_list
+        df['class_encoding'] = lable_class_encoding
+        df['weights'] = weights
+
+    return df if _class_encoding else (df, class_encoding)
 
 
-def create_words_trn_df(images_dir, _class_encoding=None, weight=1):
+def create_new_dirs(new_dir: str = None) -> Path:
     """
-    Assums that in imgs_dir there are dirs named by the letter only (len=1)
-    :param imgs_dir:
-    :return: metadata df. if _class_encoding is None, returns class_encoding dict
+    Creates a new directory for metadata files.
+
+    :param new_dir: Optional subdirectory name.
+    :return: Path to the new directory.
     """
-    df = pd.DataFrame()
-    images_list = []
-    labels_list = []
-    weights = []
-    lable_class_encoding = []
-
-    if _class_encoding is None:
-        class_encoding = {}
-    else:
-        class_encoding = _class_encoding
-
-    for dir in os.listdir(images_dir):  # dir is the letter
-        if _class_encoding is None:  # creates class encoding. Change this if you dont want class encoding to be from counter
-            class_encoding[dir] = words_dict[dir]
-        for img in os.listdir(os.path.join(images_dir, dir)):
-            images_list.append(os.path.join(images_dir, dir, img))
-            labels_list.append(dir)
-            lable_class_encoding.append(class_encoding[dir])
-            weights.append(weight)
-    df["filename"] = images_list
-    df["label"] = labels_list
-    df['class_encoding'] = lable_class_encoding
-    df['weights'] = weights
-    if _class_encoding is None:
-        return df, class_encoding
-    else:
-        return df
-
-
-def create_words_tst_df(images_dir, _class_encoding=None, weight=1):
-    """
-    assums that all tst images are in the same directory (no subdirs) and each img name starts with the letter it represent and then underline
-    for example, an img represent the letter B will be named B_something
-    :param images_dir:
-    :param _class_encoding:
-    :return:
-    """
-    df = pd.DataFrame()
-    images_list = []
-    labels_list = []
-    lable_class_encoding = []
-    weights = []
-    for img in os.listdir(images_dir):
-        cur_label = img.split('.')[0]  # ain.jpeg for example
-        images_list.append(os.path.join(images_dir, img))
-        labels_list.append(cur_label)
-        lable_class_encoding.append(class_encoding[cur_label])
-        weights.append(weight)
-
-    df["filename"] = images_list
-    df["label"] = labels_list
-    df['class_encoding'] = lable_class_encoding
-    df['weights'] = weights
-
-    return df
-
-
-def create_new_dirs(subdir=None):
-    # Create the new directory path
     root = Path(r'C:\Users\40gil\Desktop\AltDegree\final_project\tensor_training\metadata')
-
-    if subdir is None:
+    if not new_dir:
         new_dir = root / f'new_metadata_{datetime.now().strftime("%m%Y%d-%H%M")}'
     else:
-        new_dir = root / subdir
+        new_dir = root / f'{new_dir}_{datetime.now().strftime("%m%Y%d-%H%M")}'
     new_dir.mkdir(parents=True, exist_ok=True)
     return new_dir
 
 
-def save_df(df, path, name):
+def save_df(df: pd.DataFrame, path: Path, name: str):
     """
-    if df.size > 1, concating the dfs
-    :param dfs: []
-    :param path:
-    :return:
-    """
+    Saves a DataFrame to a CSV file.
 
-    if len(df) > 1:
-        final_df = pd.concat(df, ignore_index=True)
-    else:
-        final_df = df[0]
-    final_df.to_csv(os.path.join(path, f'{name}.csv'), index=False, encoding='utf-8-sig')
-    print(f'metadata saved in: {path} with the name: {name}.csv')
+    :param df: DataFrame to save.
+    :param path: Directory to save the file in.
+    :param name: Name of the CSV file.
+    """
+    df.to_csv(path / f'{name}.csv', index=False, encoding='utf-8-sig')
+    print(f'Metadata saved in: {path} with the name: {name}.csv')
 
 
 if __name__ == '__main__':
+    # Example usage for letters
     images_dir = Path(r'C:\Users\40gil\Desktop\AltDegree\final_project\tensor_training\processed_images\sivan_example_processed')
-    new_dir_name = f'SivanLettersExample{datetime.now().strftime("%m%Y%d-%H%M")}'
-    new_dir = create_new_dirs(subdir=new_dir_name)
-    TRdfs = []
+    new_dir = create_new_dirs(new_dir='SivanLettersExample')
 
-    # region train dfs
-    TRdf, class_encoding = create_trn_df(images_dir=images_dir / 'trn')
-    TRdfs.append(TRdf)
-    # endregion
+    # Handle letters without a pre-existing class encoding
+    trn_df, class_encoding = create_df(images_dir=images_dir / 'trn', mode='trn')
+    tst_df = create_df(images_dir=images_dir / 'tst', mode='tst', _class_encoding=class_encoding)
+    save_df(df=trn_df, path=new_dir, name='trn_metadata')
+    save_df(df=tst_df, path=new_dir, name='tst_metadata')
 
-    # region test df
-    TSdfs = []
-    TSdf = create_tst_df(images_dir=images_dir / 'tst')
-    TSdfs.append(TSdf)
-    save_df(df=TRdfs, path=new_dir, name='trn_metadata')
-    save_df(df=TSdfs, path=new_dir, name='tst_metadata')
-
-    # endregion
-
+    # Example usage for words
     images_dir = Path(r'C:\Users\40gil\Desktop\AltDegree\final_project\tensor_training\processed_images\sivan_words_example')
-    new_dir_name = f'SivanWordsExample{datetime.now().strftime("%m%Y%d-%H%M")}'
-    new_dir = create_new_dirs(subdir=new_dir_name)
-    TRdfs = []
+    new_dir = create_new_dirs(new_dir='SivanWordsExample')
 
-    # region train dfs
-    TRdf, class_encoding = create_words_trn_df(images_dir=images_dir / 'trn')
-    TRdfs.append(TRdf)
-    # endregion
+    # Handle words with a pre-existing class encoding
+    trn_df = create_df(images_dir=images_dir / 'trn', mode='trn', _class_encoding=words_dict)
+    tst_df = create_df(images_dir=images_dir / 'tst', mode='tst', _class_encoding=words_dict)
+    save_df(df=trn_df, path=new_dir, name='trn_metadata')
+    save_df(df=tst_df, path=new_dir, name='tst_metadata')
 
-    # region test df
-    TSdfs = []
-    TSdf = create_words_tst_df(images_dir=images_dir / 'tst')
-    TSdfs.append(TSdf)
-    save_df(df=TRdfs, path=new_dir, name='trn_metadata')
-    save_df(df=TSdfs, path=new_dir, name='tst_metadata')
-
-    # endregion
