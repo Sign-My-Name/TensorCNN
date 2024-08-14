@@ -155,11 +155,11 @@ def save_script(dir, tag='script.py'):
 
 if __name__ == '__main__':
     _loaded_model = False
-    is_words_train = True
+    is_words_train = False
     loaded_model_dir = r"C:\Users\40gil\Desktop\AltDegree\final_project\tensor_training\running_outputs\train_outputs\27-05-2024\Letters_JustCut_NoResnetLayers__bs32__ts128X128__epochs120__lr0.001__Time_16-10-26\model-letters.h5"
 
     metadata_dir_path = Path(
-        r'C:\Users\40gil\Desktop\AltDegree\final_project\tensor_training\metadata\SivanWordsExample_08202414-1103')
+        r'C:\Users\40gil\Desktop\AltDegree\final_project\tensor_training\metadata\SivanLettersExample_08202414-1103')
     train_path = metadata_dir_path / 'trn_metadata.csv'
     test_path = metadata_dir_path / 'tst_metadata.csv'
 
@@ -170,7 +170,7 @@ if __name__ == '__main__':
         'y_col': 'class_encoding',
         'validation_split': 0.2,
         'lr': 1e-3,
-        'epochs': 10,
+        'epochs': 120,
         'steps': 100,
         'extra_run_tag_str': "Letters_JustCut_ResnetLayers",
         'loaded_model': _loaded_model
